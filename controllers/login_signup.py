@@ -4,13 +4,12 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models.model import db,User
 from datetime import datetime
 
-
 @app.route("/")
 def index():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     
-    return render_template('login_signup.html')
+    return render_template('login.html')
 
 
 @app.route("/login", methods = ['POST', 'GET'])
@@ -29,31 +28,40 @@ def login():
             else:
                 return 'Invalid Password!'
         else:
-            return 'Not a Verified User...'     
+            return 'Not a Verified User...'  
+           
     return redirect(url_for('dashboard'))
 
 
 @app.route("/signup", methods = ['POST', 'GET'])
-def signup():
+def signup(): 
+    return render_template("signup.html" , success = "Registration successful! ")
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        conformpassword = request.form['conformpassword']
         full_name = request.form['fullname']
         qualification = request.form['qualification']
         dob_str = request.form['dob']
         dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
         hashed_password = generate_password_hash(password)
-        
+
         existing_user = User.query.filter_by(username=username).first()
+
         if existing_user:
-            return 'User Already Exits'
+            return render_template('signup.html', alert="User Already Exists...")
+        
+        elif password != conformpassword:
+            return render_template('signup.html', alert = "Password and Conform Password are not same...")
 
         else:
             new_user = User(username=username, password=hashed_password, full_name = full_name, qualification= qualification, dob= dob)
             db.session.add(new_user)
             db.session.commit()
-            return 'User Registered Succeffully'
+            return render_template("signup.html" , success = "Registration successful! ")
         
+    return render_template("signup.html")
+    
 @app.route('/logout' , methods = ['POST', 'GET'])
 @login_required
 def logout():

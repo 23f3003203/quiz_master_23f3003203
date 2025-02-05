@@ -7,4 +7,7 @@ from flask import current_app as app
 @app.route("/dashboard")
 @login_required
 def dashboard():
-    return render_template("user/dashboard.html")
+    if current_user.is_authenticated:
+        return render_template("user/dashboard.html")
+    
+    return redirect(url_for("index"))

@@ -17,14 +17,14 @@ def add_subject():
 
         if existing_subject:
             flash("subject Already Exits.." ,"error")
-            return redirect(url_for('add_subject'))
+            return redirect(request.url)
         
         else:
             new_subject = Subject(id=id, name = subject_name, description = description)
             db.session.add(new_subject)
             db.session.commit()
             flash("subject Added Succeffully.." ,"success")
-            return redirect(url_for('add_subject'))
+            return redirect(request.url)
 
     return render_template("admin/add_subject.html")
 
@@ -40,7 +40,8 @@ def add_chapter():
         existing_chapter = Chapter.query.filter_by(id=id).first()
 
         if existing_chapter:
-            return 'Chapter already exists'
+            flash("Chapter Already Exits" , "error")
+            return redirect(request.url)
         
         else:
             new_chapter = Chapter(id=id, name = chapter_name, description = description, subject_id=subject_id)
@@ -52,6 +53,19 @@ def add_chapter():
     return render_template("admin/add_chapter.html")
 
 
+@app.route("/admin/quiz", methods = ["POST", "GET"])
+def quiz():
+    return render_template("/admin/quiz.html")
+
+@app.route("/admin/add_quiz", methods = ["POST", "GET"])
+def add_quiz():
+    return render_template("/admin/add_quiz.html")
+
+
+@app.route("/admin/add_question", methods = ["POST", "GET"])
+def add_question():
+    return render_template("/admin/add_question.html")
+
 def get_subjects():
 
     subjects = Subject.query.all()
@@ -60,3 +74,6 @@ def get_subjects():
     subject_list = [{"id": subject.id, "name": subject.name, "description": subject.description, "chapter": [{"name": chapter.name, "description": chapter.description} for chapter in chapters if chapter.subject_id == subject.id]} for subject in subjects]
     chapters_list = [{"id": chapter.id, "name": chapter.name, "description": chapter.description, "subject_id" : chapter.subject_id} for chapter in chapters]
     return subject_list
+
+
+
