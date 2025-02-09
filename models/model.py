@@ -29,7 +29,7 @@ class User(UserMixin,db.Model):
 # Subject Model
 class Subject(db.Model):
     __tablename__ = 'subject'
-    id = db.Column(db.String(20), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
 
@@ -40,10 +40,10 @@ class Subject(db.Model):
 # Chapter Model
 class Chapter(db.Model):
     __tablename__ = 'chapter'
-    id = db.Column(db.String(20), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text)
-    subject_id = db.Column(db.String(20), db.ForeignKey('subject.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'), nullable=False)
 
     # Relationships
     quizzes = db.relationship('Quiz', backref='chapter', lazy=True)
@@ -52,8 +52,8 @@ class Chapter(db.Model):
 # Quiz Model
 class Quiz(db.Model):
     __tablename__ = 'quiz'
-    id = db.Column(db.String(20), primary_key=True)
-    chapter_id = db.Column(db.String(20), db.ForeignKey('chapter.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'), nullable=False)
     date_of_quiz = db.Column(db.Date, nullable=False, default=datetime.utcnow)
     time_duration = db.Column(db.String(10), nullable=False)  # Format: HH:MM
     remarks = db.Column(db.Text)
@@ -66,8 +66,9 @@ class Quiz(db.Model):
 # Question Model
 class Question(db.Model):
     __tablename__ = 'question'
-    id = db.Column(db.String(20), primary_key=True)
-    quiz_id = db.Column(db.String(20), db.ForeignKey('quiz.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
+    chapter_id = db.Column(db.Integer, db.ForeignKey('chapter.id'), nullable=False)
     question_statement = db.Column(db.Text, nullable=False)
     option1 = db.Column(db.String(200), nullable=False)
     option2 = db.Column(db.String(200), nullable=False)
@@ -79,8 +80,8 @@ class Question(db.Model):
 # Score Model
 class Score(db.Model):
     __tablename__ = 'score'
-    id = db.Column(db.String(20), primary_key=True)
-    quiz_id = db.Column(db.String(20), db.ForeignKey('quiz.id'), nullable=False)
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    quiz_id = db.Column(db.Integer, db.ForeignKey('quiz.id'), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     time_stamp_of_attempt = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     total_scored = db.Column(db.Integer, nullable=False)

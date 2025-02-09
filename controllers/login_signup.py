@@ -35,7 +35,6 @@ def login():
 
 @app.route("/signup", methods = ['POST', 'GET'])
 def signup(): 
-    return render_template("signup.html" , success = "Registration successful! ")
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']

@@ -17,9 +17,12 @@ def create_app():
 
 app = create_app()
 
+# with app.app_context():
+#     db.drop_all()
+#     db.create_all()
+
 @login_manager.user_loader
 def load_user(user_id):
-  # Fetch the user by ID from the database
     return User.query.get(int(user_id))
 
 
