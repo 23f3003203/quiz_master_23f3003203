@@ -2,51 +2,53 @@
 
 {% block content %}
 
-<div class="quiz-container mt-4 p-4">
-    <!-- Header Section -->
-    <div class="d-flex justify-content-between align-items-center">
-        <span class="question-number">Q.No. <span id="current-question">3</span>/15</span>
-        <span class="timer-box" id="timer">00:13:52</span>
+<div class="container-sm w-50 mt-5 p-3 border rounded shadow-sm">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-2">
+        <span class="text-muted small">Q.No. <span id="current-question">3</span>/{{ quiz_questions.questions | length }}</span>
+        <span class="badge bg-warning text-dark p-2" id="timer" >{{ quiz_questions.time }}</span>
     </div>
 
-    <!-- Question Box -->
-    <div class="question-box mt-3">
-        .....Question Statement...
-    </div>
+    {% for question in quiz_questions.questions %}
+    <div class="mb-3">
+        <p class="fw-bold">{{ question.question_statement }}</p>
 
-    <!-- Options -->
-    <div class="mt-3">
-        <div class="form-check">
-            <label class="option-label">
-                <input class="form-check-input" type="radio" name="quiz-option" value="1">
-                1) Option....
-            </label>
-        </div>
-        <div class="form-check">
-            <label class="option-label">
-                <input class="form-check-input" type="radio" name="quiz-option" value="2">
-                2) Option....
-            </label>
-        </div>
-        <div class="form-check">
-            <label class="option-label">
-                <input class="form-check-input" type="radio" name="quiz-option" value="3" checked>
-                3) Option....
-            </label>
-        </div>
-        <div class="form-check">
-            <label class="option-label">
-                <input class="form-check-input" type="radio" name="quiz-option" value="4">
-                4) Option....
-            </label>
+        <!-- Options -->
+        <div class="row g-2">
+            <div class="col-md-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="quiz-option-{{ question.id }}" value="1">
+                    <label class="form-check-label">{{ question.option1 }}</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="quiz-option-{{ question.id }}" value="2">
+                    <label class="form-check-label">{{ question.option2 }}</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="quiz-option-{{ question.id }}" value="3">
+                    <label class="form-check-label">{{ question.option3 }}</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio" name="quiz-option-{{ question.id }}" value="4">
+                    <label class="form-check-label">{{ question.option4 }}</label>
+                </div>
+            </div>
+            
         </div>
     </div>
+    {% endfor %}
 
-    <!-- Footer Buttons -->
-    <div class="quiz-footer mt-4">
-        <button class="btn btn-primary">Save and Next</button>
-        <button class="btn btn-success">Submit</button>
+    <!-- Footer -->
+    <div class="d-flex justify-content-between mt-3">
+        <button class="btn btn-primary btn-sm">Save & Next</button>
+        <button class="btn btn-success btn-sm">Submit</button>
     </div>
 </div>
 
+
 {% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="{{ url_for('static', filename='js/quiz.js') }}"></script>
+{%endblock%}
+

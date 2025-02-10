@@ -7,3 +7,13 @@ nav{
     color: #333;
     margin-bottom: 30px;
 }
+.navbar-toggler{
+    color: white;
+    border: solid 1px white;
+}
+.navbar-toggler:focus{
+    box-shadow: none;
+}
+.btn-search{
+    border: solid 1px white;
+}

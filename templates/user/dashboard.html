@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="container table-container">
-  <h3 class="text-center">Upcoming Quizzes</h3>
+  <h3 class="text-center mb-4">Upcoming Quizzes</h3>
   <div class="table-responsive">
     <table class="table table-bordered table-hover text-center">
       <thead class="table-light">
@@ -10,7 +10,7 @@
           <th>ID</th>
           <th>No. of Questions</th>
           <th>Date</th>
-          <th>Duration (hh:mm)</th>
+          <th>Duration (mm:ss)</th>
           <th>Action</th>
         </tr>
       </thead>
@@ -22,7 +22,7 @@
           <td>{{quiz.date_of_quiz}}</td>
           <td>{{quiz.time_duration}}</td>
           <td class="action-buttons">
-            <button class="btn btn-primary btn-sm">View</button>
+            <a href="/view-quiz/{{quiz.id}}"><button id="{{quiz.id}}" class="btn btn-primary btn-sm">View</button></a>
             <a href="/quiz/{{quiz.id}}"><button id="{{quiz.id}}" class="btn btn-success btn-sm">Start</button></a>
           </td>
         </tr>

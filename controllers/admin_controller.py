@@ -8,7 +8,6 @@ def admin_dashboard():
     questions = Question.query.all()
 
     subject_list = [{"id":subject.id, "name": subject.name,"chapters" :[{"id":chapter.id, "name": chapter.name , "questions":[question.id for question in questions if question.chapter_id == chapter.id]} for chapter in chapters if chapter.subject_id == subject.id] } for subject in subjects]
-    # return subject_list[0]
     return render_template("admin/dashboard.html", subjects = subject_list)
 
 @app.route("/admin/add_subject", methods= ["POST", "GET"])
