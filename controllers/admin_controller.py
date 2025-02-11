@@ -52,7 +52,7 @@ def quiz():
     quizes = db.session.query(Quiz, Chapter).join(Chapter).all()
     questions = Question.query.all()
     
-    quiz_list = [{"questions": [{"id": question.id ,"question_statement": question.question_statement , "option1":question.option1, "option2":question.option2, "option3":question.option3, "option4": question.option4, "correct_option":question.correct_option  } for question in questions if question.quiz_id == quiz.id] ,"id":quiz.id, "chapter": chapter.name, "date_of_quiz": quiz.date_of_quiz, "time_duration": quiz.time_duration, "remarks": quiz.remarks} for quiz, chapter in quizes]
+    quiz_list = [{"questions": [{"id": question.id ,"question_statement": question.question_statement } for question in questions if question.quiz_id == quiz.id] ,"id":quiz.id, "chapter": chapter.name, "date_of_quiz": quiz.date_of_quiz, "time_duration": quiz.time_duration} for quiz, chapter in quizes]
 
     return render_template("/admin/quiz.html" , quizes = quiz_list)
 

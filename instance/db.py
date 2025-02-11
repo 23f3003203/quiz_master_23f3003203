@@ -5,7 +5,7 @@ conn = sqlite3.connect("quiz_master.db")
 cursor = conn.cursor()
 
 # Run SQL commands
-cursor.execute("ALTER TABLE question ADD COLUMN chapter_id INTEGER NOT NULL DEFAULT 1;")
+cursor.execute("DELETE FROM score")
 
 # Commit and close the connection
 conn.commit()

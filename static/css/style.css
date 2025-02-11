@@ -15,5 +15,10 @@ nav{
     box-shadow: none;
 }
 .btn-search{
+    color: white;
     border: solid 1px white;
+}
+.btn-search:hover{
+    background-color: white;
+    color: #333;
 }

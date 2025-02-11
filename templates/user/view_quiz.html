@@ -20,9 +20,13 @@
 
         <div class="col-5"><label>Duration (hh:mm) :</label></div>
         <div class="col-5"><input type="text" class="form-control" value="{{ quiz.time }}" readonly></div>
+
+        <div class="col-5"><label>Remarks :</label></div>
+        <div class="col-5"><input type="text" class="form-control" value="{{ quiz.remarks }}" readonly></div>
+        
     </div>
 
-    <button class="btn btn-lg btn-secondary mt-5">Close</button>
+    <a href="/"><button class="btn btn-lg btn-secondary mt-5">Close</button></a>
 </div>
 
 {% endblock %}

@@ -1,5 +1,5 @@
 function startTimer(duration) {
-    let timer = duration;       // Set the timer duration (e.g., 60 seconds)
+    let timer = duration;       
     let display = document.getElementById("timer"); 
 
     let countdown = setInterval(function () {
@@ -23,3 +23,9 @@ window.onload = function () {
     let timeInSeconds = minutes * 60 + seconds;
     startTimer(timeInSeconds);
 };
+
+
+
+
+
+

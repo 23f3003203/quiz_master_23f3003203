@@ -37,9 +37,9 @@
         </ul>
         <form class="d-flex" role="search">
           <input class="form-control me-2" type="search" placeholder="Search" aria-label="Search">
-          <button class="btn text-white btn-search" type="submit">Search</button>
+          <button class="btn btn-search" type="submit">Search</button>
         </form>
-        <span class="ms-3">Welcome, User</span>
+        <span class="ms-3 text-white"><i class="fa-solid fa-user fa-xl"></i> {{ current_user.full_name }}</span>
       </div>
     </div>
   </nav>
