@@ -11,8 +11,8 @@
 
     <form action="" method="post">
     {% for question in quiz_questions.questions %}
-    <div class="mb-3 ">
-        <p class="fw-bold text-center">{{ question.question_statement }}</p>
+    <div class="mb-3">
+        <p class="fw-bold text-start">{{ loop.index }}).  {{ question.question_statement }}</p>
         <div class="row g-2">
             <div class="col-md-6">
                 <div class="form-check">

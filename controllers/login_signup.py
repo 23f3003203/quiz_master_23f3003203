@@ -1,4 +1,4 @@
-from flask import current_app as app, request, session, render_template, redirect, url_for
+from flask import current_app as app, request, render_template, redirect, url_for, flash
 from flask_login import login_user, logout_user, current_user, login_required
 from werkzeug.security import generate_password_hash, check_password_hash
 from models.model import db,User
@@ -15,20 +15,20 @@ def index():
 @app.route("/login", methods = ['POST', 'GET'])
 def login():
     if request.method == 'POST':
-        username = request.form['username']
+        email = request.form['username']
         password = request.form['password']
 
-        user = User.query.filter_by(username=username).first()
+        user = User.query.filter_by(username=email).first()
 
         if user:
             if check_password_hash(user.password, password):
-                login_user(user) # Store user in session
+                login_user(user) 
                 print(current_user)
                 return redirect(url_for('dashboard'))
             else:
-                return 'Invalid Password!'
+                return render_template("login.html", alert = "Password Not Matched...")
         else:
-            return 'Not a Verified User...'  
+            return render_template("login.html", alert = "Not a Verified User...") 
            
     return redirect(url_for('dashboard'))
 
@@ -45,6 +45,9 @@ def signup():
         dob = datetime.strptime(dob_str, '%Y-%m-%d').date()
         hashed_password = generate_password_hash(password)
 
+        if any(not field for field in [username, password, conformpassword, full_name, qualification, dob_str]):
+            return render_template("signup.html", alert="Enter All Fields...")
+
         existing_user = User.query.filter_by(username=username).first()
 
         if existing_user:
@@ -52,12 +55,16 @@ def signup():
         
         elif password != conformpassword:
             return render_template('signup.html', alert = "Password and Conform Password are not same...")
+        
+        elif len(full_name) <=4:
+            return render_template('signup.html', alert = "Enter a valid Full Name")
 
         else:
             new_user = User(username=username, password=hashed_password, full_name = full_name, qualification= qualification, dob= dob)
             db.session.add(new_user)
             db.session.commit()
-            return render_template("signup.html" , success = "Registration successful! ")
+            flash("Registration successful! ", "success")
+            return render_template("signup.html")
         
     return render_template("signup.html")
     

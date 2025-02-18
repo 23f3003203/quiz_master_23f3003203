@@ -1,9 +1,13 @@
-from flask import Flask, jsonify,flash
+from flask import Flask,flash
 from flask import render_template , request, redirect, url_for
 from flask_login import login_required, logout_user, current_user
 from flask import current_app as app
 from models.model import *
 from datetime import date
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import os
 
 @app.route("/dashboard")
 @login_required
@@ -29,7 +33,6 @@ def dashboard():
         return render_template("user/dashboard.html", quizes = quizes)
 
     return redirect(url_for("index"))
-
 
 @app.route("/quiz/<int:id>", methods = ["POST", "GET"])
 @login_required
@@ -71,7 +74,6 @@ def quiz_start(id):
         
     return redirect(url_for("index"))
 
-
 @app.route("/view-quiz/<int:id>")
 @login_required
 def view_quiz(id):
@@ -94,17 +96,6 @@ def view_quiz(id):
 
         return render_template("user/view_quiz.html", quiz = quiz)
     
-
-@app.route("/quiz-questions/<int:id>", methods = ["POST", "GET"])
-@login_required
-def quiz_questions(id):
-    quiz = Quiz.query.get(id)
-    questions = Question.query.filter_by(quiz_id=id).all()
-    quiz_questions = {"id":quiz.id, "time" : quiz.time_duration, "questions":[{"question_number": index + 1, "id": question.id ,"question_statement": question.question_statement , "option1":question.option1, "option2":question.option2, "option3":question.option3, "option4": question.option4} for index, question in enumerate(questions)]}
-
-    return jsonify(quiz_questions)
-
-
 @app.route("/score")
 @login_required
 def quiz_score():
@@ -127,7 +118,6 @@ def quiz_score():
     
     return redirect(url_for("index"))
 
-
 @app.route("/summary")
 @login_required
 def summary():
@@ -135,7 +125,7 @@ def summary():
         id = current_user.id
         if current_user.is_authenticated:
             quiz_attempted = db.session.query(
-                Score.user_id,
+                Score.user_id.label("id"),
                 Subject.name.label("Subject"),
                 db.func.count(Chapter.id).label("Chapter_Count")
             ).join(Quiz, Score.quiz_id == Quiz.id) \
@@ -144,8 +134,34 @@ def summary():
             .filter(Score.user_id == current_user.id)\
             .group_by(Subject.id, ) \
             .all()
-            
-            return render_template("user/summary.html", quiz_attempted = quiz_attempted)
+
+            month_quiz = (
+                db.session.query(
+                    db.func.strftime('%m', Score.time_stamp_of_attempt).label("month"), 
+                    db.func.count(Score.user_id).label("attempts") 
+                )
+                .filter(Score.user_id == current_user.id)
+                .group_by("month")
+                .order_by("month")
+                .all()
+            )
+            months = [quiz.month for quiz in month_quiz]
+            attempt = [quiz.attempts for quiz in month_quiz]
+
+            plt.pie(attempt, labels=months, autopct=lambda p: '{:.0f}'.format(p * sum(attempt) / 100),  startangle=90)
+            file_path = os.path.join("static/charts/piechart", f'{current_user.id}piechart.png')
+            plt.savefig(file_path)
+            plt.close()
+
+
+            subjects = [quiz.Subject for quiz in quiz_attempted]
+            chapter_counts = [quiz.Chapter_Count for quiz in quiz_attempted]
+
+            plt.bar(subjects, chapter_counts)
+            file_path = os.path.join("static/charts/histogram", f'{current_user.id}histogram.png')
+            plt.savefig(file_path)
+            plt.close()
+
+            return render_template("user/summary.html", month_quiz = month_quiz)
 
     return render_template("user/summary.html")
-

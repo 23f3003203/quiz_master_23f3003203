@@ -22,3 +22,17 @@ nav{
     background-color: white;
     color: #333;
 }
+
+.btn-edit {
+    background-color: #AFC2D5;
+    color: black;
+}
+
+.btn-delete {
+    background-color: #E6A5A1;
+    color: black;
+}
+
+.btn-confirm{
+    background-color: lightgreen;
+}
