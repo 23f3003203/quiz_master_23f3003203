@@ -4,7 +4,7 @@
 
 <div class="container-sm w-50 mt-5 p-3 border rounded shadow-sm">
     <div class="d-flex justify-content-between align-items-center mb-2">
-        <span class="text-muted small" id="total-question">Q.No. <span id="current-question">0</span>/{{
+        <span class="text-bold small" id="total-question">Total Questions. {{
             quiz_questions.questions | length }}</span>
         <span class="badge bg-warning text-dark p-2" id="timer">{{ quiz_questions.time }}</span>
     </div>
@@ -12,7 +12,7 @@
     <form action="" method="post">
     {% for question in quiz_questions.questions %}
     <div class="mb-3">
-        <p class="fw-bold text-start">{{ loop.index }}).  {{ question.question_statement }}</p>
+        <p class="fw-bold text-start text-break">{{ loop.index }}).  {{ question.question_statement }}</p>
         <div class="row g-2">
             <div class="col-md-6">
                 <div class="form-check">
@@ -37,9 +37,8 @@
     </div>
 
     {% endfor %}
-    <div class="d-flex justify-content-between mt-3">
-        <button class="btn btn-primary btn-sm">Save & Next</button>
-        <button type="submit" class="btn btn-success btn-sm">Submit</button>
+    <div class="d-flex justify-content-center mt-3">
+        <button type="submit" class="btn btn-success btn-sm w-50">Submit</button>
     </div>
     </form>
 

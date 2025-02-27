@@ -1,5 +1,4 @@
 {% extends "admin/formbase.html" %}
-{% block title %}Question{% endblock %}
 
 {% block content %}
 
@@ -10,7 +9,7 @@
     <form action="" method="post">
         <div class="mb-3">
             <label for="question_statement" class="form-label">Question Statement</label>
-            <textarea class="form-control" name="question_statement" id="question_statement" rows="4"
+            <textarea class="form-control" name="question_statement" rows="4"
                 required></textarea>
         </div>
 
@@ -18,24 +17,24 @@
 
         <div class="mb-2 d-flex align-items-center justify-content-center">
             <label for="option1" class="form-label me-2">Option 1 : </label>
-            <input type="text" class="form-control w-50" name="option1" id="option1" required>
+            <input type="text" class="form-control w-50" name="option1" required>
         </div>
         <div class="mb-2 d-flex align-items-center justify-content-center">
             <label for="option2" class="form-label me-2">Option 2 : </label>
-            <input type="text" class="form-control w-50" name="option2" id="option2" required>
+            <input type="text" class="form-control w-50" name="option2" required>
         </div>
         <div class="mb-2 d-flex align-items-center justify-content-center">
             <label for="option3" class="form-label me-2">Option 3 : </label>
-            <input type="text" class="form-control w-50" name="option3" id="option3" required>
+            <input type="text" class="form-control w-50" name="option3" required>
         </div>
         <div class="mb-2 d-flex align-items-center justify-content-center">
             <label for="option4" class="form-label me-2">Option 4 : </label>
-            <input type="text" class="form-control w-50" name="option4" id="option4" required>
+            <input type="text" class="form-control w-50" name="option4" required>
         </div>
 
         <div class="mb-4 d-flex align-items-center justify-content-center">
             <label for="correct-option" class="form-label me-2">Correct Option : </label>
-            <select class="form-control w-50" name="correct-option" id="correct-option" required>
+            <select class="form-control w-50" name="correct-option" required>
                 <option value="">-- Select Correct Option --</option>
                 <option value="1">1</option>
                 <option value="2">2</option>
@@ -61,7 +60,7 @@
     <form action="" method="post">
         <div class="mb-3">
             <label for="question_statement" class="form-label">Question Statement</label>
-            <textarea class="form-control" name="question_statement" id="question_statement" rows="4"
+            <textarea class="form-control" name="question_statement" rows="4"
                 required> {{question.question_statement}}</textarea>
         </div>
 
@@ -69,28 +68,29 @@
 
         <div class="mb-2 d-flex align-items-center justify-content-center">
             <label for="option1" class="form-label me-2">Option 1 : </label>
-            <input type="text" class="form-control w-50" name="option1" id="option1" value="{{question.option1}}"
+            <input type="text" class="form-control w-50" name="option1" value="{{question.option1}}"
                 required>
         </div>
         <div class="mb-2 d-flex align-items-center justify-content-center">
             <label for="option2" class="form-label me-2">Option 2 : </label>
-            <input type="text" class="form-control w-50" name="option2" id="option2" value="{{question.option2}}"
+            <input type="text" class="form-control w-50" name="option2" value="{{question.option2}}"
                 required>
         </div>
         <div class="mb-2 d-flex align-items-center justify-content-center">
             <label for="option3" class="form-label me-2">Option 3 : </label>
-            <input type="text" class="form-control w-50" name="option3" id="option3" value="{{question.option3}}"
+            <input type="text" class="form-control w-50" name="option3" value="{{question.option3}}"
                 required>
         </div>
         <div class="mb-2 d-flex align-items-center justify-content-center">
             <label for="option4" class="form-label me-2">Option 4 : </label>
-            <input type="text" class="form-control w-50" name="option4" id="option4" value="{{question.option4}}"
+            <input type="text" class="form-control w-50" name="option4" value="{{question.option4}}"
                 required>
         </div>
 
         <div class="mb-4 d-flex align-items-center justify-content-center">
             <label for="correct-option" class="form-label me-2">Correct Option : </label>
             <select class="form-control w-50" name="correct-option" id="correct-option" required>
+                
                 <option value="">-- Select Correct Option --</option>
                 {% for i in range(4) %}
                     {% if question.correct_option == i | string %}

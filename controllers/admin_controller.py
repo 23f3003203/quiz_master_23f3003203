@@ -1,11 +1,32 @@
-from flask import current_app as app, render_template, request, redirect, url_for, flash, jsonify
+from flask import current_app as app, render_template, request, redirect, url_for, flash, jsonify, abort
 from models.model import *
 from datetime import date
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import os
+from flask_login import login_required, current_user
+from functools import wraps
+
+def admin_only(func):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        if current_user.id != 1:
+            abort(403)
+        
+        return func(*args, **kwargs) 
+    return decorated_function
+    
 
 
-
+#verified
 @app.route("/admin/dashboard")
+@app.route("/admin")
+@login_required
+@admin_only
 def admin_dashboard():
+    if current_user.id != 1:
+        return "you are not admin"
 
     if request.args.get("q"):
         id = request.args.get("q")
@@ -23,8 +44,10 @@ def admin_dashboard():
     return render_template("admin/dashboard.html", subjects = subject_list)
 
 
-
+#verified
 @app.route("/admin/quiz", methods = ["POST", "GET"])
+@login_required
+@admin_only
 def quiz():
     q = request.args.get("q")
 
@@ -48,14 +71,108 @@ def quiz():
 
 
 
-@app.route("/admin/summary")
+@app.route("/admin/summary", methods = ["POST", "GET"])
+@login_required
+@admin_only
 def admin_summary():
+    users = db.session.query(User)
+    subjects_all = db.session.query(Subject)
 
-    return "admin summary"
+    if request.args.get("subject") and request.args.get("chapter"):
+        subject_id = request.args.get("subject")
+        chapter_id = request.args.get("chapter")
+
+        quiz_scores = db.session.query(
+            User.full_name.label("name"),
+            Score.total_scored.label("total_scored"),
+            Subject.name.label("subject_name"),
+            Chapter.name.label("chapter_name"),
+            Quiz.date_of_quiz.label("quiz_date"),
+            Quiz.time_duration.label("quiz_time"))\
+            .join(User, Score.user_id == User.id)\
+            .join(Quiz, Score.quiz_id == Quiz.id)\
+            .join(Chapter, Quiz.chapter_id == Chapter.id)\
+            .join(Subject, Chapter.subject_id == Subject.id)\
+            .filter(Subject.id == subject_id, Chapter.id == chapter_id)\
+            .order_by(Quiz.date_of_quiz.desc(), Score.total_scored.desc()).all()
+        
+        return render_template("admin/summary.html", quiz_scores = quiz_scores, users = users, subjects = subjects_all)
 
 
 
+
+    if request.args.get("user"):
+        user_id = int(request.args.get("user"))
+        user = db.session.query(User).filter(User.id == user_id).first()
+        
+
+        scores = db.session.query(
+            Subject.name.label("subject"),
+            Chapter.name.label("chapter"),
+            Quiz.date_of_quiz.label("date"),
+            Score.total_scored.label("score"),
+            db.func.count(Question.id).label("question_count") 
+            ).join(Quiz, Score.quiz_id == Quiz.id) \
+            .join(Chapter, Quiz.chapter_id == Chapter.id) \
+            .join(Subject, Chapter.subject_id == Subject.id) \
+            .join(Question, Quiz.id == Question.quiz_id) \
+            .filter(Score.user_id == user_id) \
+            .order_by(Score.time_stamp_of_attempt.asc()) \
+            .group_by(Quiz.id).all()
+
+        quiz_attempted = db.session.query(
+                Score.user_id.label("id"),
+                Subject.name.label("Subject"),
+                db.func.count(Chapter.id).label("Chapter_Count")
+            ).join(Quiz, Score.quiz_id == Quiz.id) \
+            .join(Chapter, Chapter.id == Quiz.chapter_id) \
+            .join(Subject, Chapter.subject_id == Subject.id) \
+            .filter(Score.user_id == user_id)\
+            .group_by(Subject.id, ) \
+            .all()
+
+        month_quiz = (
+            db.session.query(
+                db.func.strftime('%m', Score.time_stamp_of_attempt).label("month"), 
+                db.func.strftime('%Y', Score.time_stamp_of_attempt).label("year"),
+                db.func.count(Score.user_id).label("attempts") 
+            )
+            .filter(Score.user_id == user_id)
+            .group_by("month")
+            .order_by("month")
+            .all()
+        )
+        months = [f'{quiz.month} {quiz.year}' for quiz in month_quiz]
+        attempt = [quiz.attempts for quiz in month_quiz]
+
+        plt.pie(attempt, labels=months, autopct=lambda p: '{:.0f}'.format(p * sum(attempt) / 100),  startangle=90)
+        file_path = os.path.join("static/charts/piechart", f'{user_id}piechart.png')
+        plt.savefig(file_path)
+        plt.close()
+
+
+        subjects = [quiz.Subject for quiz in quiz_attempted]
+        chapter_counts = [quiz.Chapter_Count for quiz in quiz_attempted]
+        
+        if chapter_counts: 
+            plt.yticks([i for i in range(1, max(chapter_counts) + 2)])
+        else:
+            plt.yticks([1])
+
+        plt.bar(subjects, chapter_counts)
+        file_path = os.path.join("static/charts/histogram", f'{user_id}histogram.png')
+        plt.savefig(file_path)
+        plt.close()
+
+        return render_template("admin/summary.html", scores = scores, user = user, users = users , subjects= subjects_all)
+
+    return render_template("admin/summary.html", users = users , subjects = subjects_all)
+
+
+#verified
 @app.route("/admin/add_subject", methods= ["POST", "GET"])
+@login_required
+@admin_only
 def add_subject():
     if request.method == 'POST':
         subject_name = request.form['subject_name'].strip()
@@ -74,14 +191,67 @@ def add_subject():
         new_subject = Subject(name = subject_name, description = description)
         db.session.add(new_subject)
         db.session.commit()
-        flash("subject Added Succeffully.." ,"success")
+        flash("Subject Added Succeffully.." ,"success")
         return redirect(request.url)
 
-    return render_template("admin/add_subject.html")
+    return render_template("admin/subject.html", add_subject = True)
+
+
+#verified
+@app.route("/admin/edit_subject", methods = ["POST", "GET"])
+@login_required
+@admin_only
+def edit_subject():
+    subject_id = request.args.get("subject_id")
+
+    if not subject_id:
+        flash("Something went Wrong! Try Again..." , "danger")
+        return redirect(request.url)
+
+    if request.method == "POST":
+
+        subject = db.session.query(Subject).filter(Subject.id == subject_id).first()
+
+        subject_name = request.form['subject_name'].strip()
+        description = request.form['description']
+
+        if not subject_name:
+            flash("Please Enter Subject Name...", "danger")
+            return redirect(request.url)
+        
+        if subject_name == subject.name:
+            subject.description = description
+            db.session.commit()
+            flash("Subject Edited Successfully...", "success")
+            return redirect(request.url)
+
+        existing_subject = db.session.query(Subject).filter(Subject.name==subject_name).first()
+        if existing_subject:
+            flash("Subject Already Exits..." ,"danger")
+            return redirect(request.url)
+
+        subject.name = subject_name
+        subject.description = description
+        db.session.commit()
+
+        flash("Subject Edited Successfully...", "success")
+        return redirect(request.url)
+    
+
+    subject = db.session.query(Subject).filter(Subject.id == subject_id).first()
+
+    if not subject:
+        flash("Something Went Wrong! Try Again...", "danger")
+        return redirect(request.referrer)
+
+    return render_template("admin/subject.html", edit_subject=True, subject = subject)
 
 
 
+#verified
 @app.route("/admin/add_chapter" , methods = ["POST", "GET"])
+@login_required
+@admin_only
 def add_chapter():
     if request.method=='POST':
         subject_id = request.args.get('subject_id')
@@ -108,7 +278,41 @@ def add_chapter():
 
 
 
+#verified
+@app.route("/admin/delete-chapter", methods = ["POST", "GET"])
+@login_required
+@admin_only
+def delete_chapter():
+    chapter_id = request.args.get('id')
+    if not chapter_id:
+        flash("Chapter Deletion failed..." , "danger")
+        return redirect(request.referrer)
+    
+    chapter_with_quiz = db.session.query(Chapter)\
+        .join(Quiz, Chapter.id == Quiz.chapter_id)\
+        .filter(Chapter.id == chapter_id, Quiz.date_of_quiz <= date.today()).first()
+    
+    if chapter_with_quiz:
+        flash("You can't delete a chapter with Quiz..." , "danger")
+        return redirect(request.referrer)
+    
+    try:
+        db.session.query(Question).filter(Question.chapter_id == chapter_id).delete()
+        db.session.query(Quiz).filter(Quiz.chapter_id == chapter_id).delete()
+    except:
+        None
+
+    db.session.query(Chapter).filter(Chapter.id == chapter_id).delete()
+    
+    db.session.commit()
+    flash("Chapter Deleted Successfully...", "success")
+    return redirect(request.referrer)
+
+
+#verified
 @app.route("/admin/edit-chapter", methods = ["POST", "GET"])
+@login_required
+@admin_only
 def edit_chapter():
     chapter_id = request.args.get('chapter_id')
     subject_id = request.args.get('subject_id')
@@ -143,7 +347,7 @@ def edit_chapter():
         chapter.description = description
         db.session.commit()
         flash("Chapter Edit Successfully..." , "success")
-        return redirect(url_for('admin_dashboard'))
+        return redirect(request.url)
     
     chapter_details = db.session.query(Chapter).filter(Chapter.id == chapter_id).first()
 
@@ -151,15 +355,25 @@ def edit_chapter():
 
 
 
+
+
+#verified
 @app.route("/admin/add-quiz", methods = ["POST", "GET"])
+@login_required
+@admin_only
 def add_quiz():
     if request.method == "POST":
         chapter_id = int(request.form['chapter'])
         date_of_quiz_str = request.form['date_of_quiz']
-        time_duration = request.form['time']
+        time = request.form['time'].strip()
         remarks = request.form['remarks']
 
         date_of_quiz = datetime.strptime(date_of_quiz_str, '%Y-%m-%d').date()
+
+        if not ":" in time:
+            time_duration = time + ":00"
+        else:
+            time_duration = time
 
         if date_of_quiz < date.today():
             flash("Select a future date for quiz...")
@@ -180,20 +394,28 @@ def add_quiz():
 
 
 
+#verified
 @app.route("/admin/edit-quiz", methods = ["POST", "GET"])
+@login_required
+@admin_only
 def edit_quiz():
     q = request.args.get("q")
     
     if request.method =='POST':
         chapter_id = request.form["chapter"]
         date_of_quiz_str = request.form['date_of_quiz']
-        time_duration = request.form['time']
+        time = request.form['time'].strip()
         remarks = request.form['remarks']
 
         date_of_quiz = datetime.strptime(date_of_quiz_str, '%Y-%m-%d').date()
 
+        if not ":" in time:
+            time_duration = time + ":00"
+        else:
+            time_duration = time
+
         if date_of_quiz < date.today():
-            flash("Select a future date for quiz...")
+            flash("Select a future date for quiz...", "danger")
             return redirect(request.url)
 
         if not date_of_quiz or not time_duration or not chapter_id:
@@ -216,6 +438,7 @@ def edit_quiz():
         return redirect(request.url)         
 
     if not q:
+        flash("Something Went Wrong! Try Again...", "danger")
         return redirect(url_for("quiz"))
 
     quiz = db.session.query(
@@ -233,12 +456,43 @@ def edit_quiz():
     
     subjects = db.session.query(Subject).all()
 
-    return render_template("/admin/quizform.html",subjects = subjects,  quiz = quiz , edit_quiz = True)
+    return render_template("/admin/quizform.html", subjects = subjects,  quiz = quiz , edit_quiz = True)
 
 
 
 
+#verified
+@app.route("/admin/delete-quiz", methods = ["POST", "GET"])
+@login_required
+@admin_only
+def dlt_quiz():
+    q = int(request.args.get("q"))
+
+    if q:
+        quiz = db.session.query(Quiz).filter(Quiz.id == q).first()
+        if quiz.date_of_quiz <= date.today():
+            flash("Can't Delete a Past Quiz...", "danger")
+            return redirect(request.referrer)
+        
+        questions = db.session.query(Question).filter(Question.quiz_id == q).all()
+        for question in questions:
+            db.session.delete(question)
+        
+        db.session.delete(quiz)
+
+        db.session.commit()
+        flash("Quiz Deleted Successfully...", "success")
+        return redirect(request.referrer)
+
+
+    flash("Something Went Wrong...", "danger")
+    return redirect(request.referrer)
+
+
+#verified
 @app.route("/admin/add-question", methods = ["POST", "GET"])
+@login_required
+@admin_only
 def add_question():
     if request.method == "POST":
         quiz_id = request.args.get('quiz_id')
@@ -248,8 +502,6 @@ def add_question():
         option3 = request.form['option3']
         option4 = request.form['option4']
         correct_option = request.form['correct-option']
-        quiz = Quiz.query.filter_by(id=quiz_id).first()
-        chapter_id = quiz.chapter_id
 
         if not quiz_id:
             flash("Quiz is required", "error")
@@ -259,7 +511,7 @@ def add_question():
             flash("All fields are required...", "error")
             return redirect(request.url)
 
-        new_question = Question(quiz_id = quiz_id,chapter_id = chapter_id, question_statement = question_statement, option1 = option1, option2 = option2, option3 = option3, option4 = option4, correct_option = correct_option)
+        new_question = Question(quiz_id = quiz_id, question_statement = question_statement, option1 = option1, option2 = option2, option3 = option3, option4 = option4, correct_option = correct_option)
         db.session.add(new_question)
         db.session.commit()
         flash("Question Added Successfully...", "success")
@@ -269,15 +521,25 @@ def add_question():
 
 
 
+#verified
 @app.route("/admin/edit-question", methods = ["POST", "GET"])
+@login_required
+@admin_only
 def edit_question():
     question_id = request.args.get("id")
 
     if not question_id:
         flash("Something Went Wrong! Try Again..." , "danger")
-        return redirect(url_for('quiz'))
+        return redirect(request.referrer)
     
     if request.method == "POST":
+
+        if db.session.query(Question)\
+            .join(Quiz, Question.quiz_id == Quiz.id)\
+            .filter(Question.id == question_id , Quiz.date_of_quiz < date.today()).first():
+            flash("Can't Edit a Previous Quiz Question...", "danger")
+            return redirect(request.referrer)
+
         question_statement = request.form['question_statement']
         option1 = request.form['option1']
         option2 = request.form['option2']
@@ -302,62 +564,39 @@ def edit_question():
         return redirect(url_for('quiz'))
     
     
-    question = Question.query.filter_by(id=question_id).first()
+    question = db.session.query(Question).filter(Question.id == question_id).first()
+
     if not question:
         flash("Something Went Wrong! Try Again..." , "danger")
-        return redirect(url_for('quiz'))
+        return redirect(request.referrer)
     
     return render_template("admin/question.html", question = question, edit_question = True)
     
 
 
-@app.route("/admin/delete-chapter", methods = ["POST", "GET"])
-def delete_chapter():
-    chapter_id = request.args.get('id')
-    if not chapter_id:
-        flash("Chapter Deletion failed..." , "danger")
-        return redirect(url_for('admin_dashboard'))
-    
-    chapter = Chapter.query.filter_by(id=chapter_id).first()
-    if not chapter:
-        flash("chapter not Found..." , "danger")
-        return redirect(url_for('admin_dashboard'))
-    
-    db.session.query(Question).filter(Question.chapter_id == chapter_id).delete()
-    db.session.query(Quiz).filter(Quiz.chapter_id == chapter_id).delete()
-    db.session.delete(chapter)
-    db.session.commit()
-    flash("Chapter Deleted Successfully...", "success")
-    return redirect(url_for('admin_dashboard'))
 
-
-
-@app.route("/admin/get-chapters", methods = ["POST", "GET"])
-def get_chapters():
-    subject_id = request.args.get('subject_id')
-    if not subject_id:
-        chapters = Chapter.query.all()
-        chapters = [{"id":chapter.id, "name": chapter.name, "description": chapter.description} for chapter in chapters]
-        return jsonify(chapters)
-
-    chapters = Chapter.query.filter_by(subject_id=subject_id).all()
-    chapter_list = [{"id":chapter.id, "name": chapter.name, "description": chapter.description} for chapter in chapters]
-    return jsonify(chapter_list)
-
-
-
+#verified
 @app.route("/admin/delete-question", methods = ["POST", "GET"])
+@login_required
+@admin_only
 def delete_question():
     question_id = request.args.get('id')
+
     if not question_id:
         flash("Something Went Wrong! Try Again..." , "danger")
-        return redirect(url_for('quiz'))
+        return redirect(request.referrer)
     
-    question = Question.query.filter_by(id=question_id).first()
+    question = db.session.query(Question).filter(Question.id == question_id).first()
     if not question:
         flash("Something Went Wrong! Try Again..." , "danger")
-        return redirect(url_for('quiz'))
+        return redirect(request.referrer)
     
+    if db.session.query(Question)\
+            .join(Quiz, Question.quiz_id == Quiz.id)\
+            .filter(Question.id == question_id , Quiz.date_of_quiz < date.today()).first():
+            flash("Can't Delete a Previous Quiz Question...", "danger")
+            return redirect(request.referrer)
+
     db.session.delete(question)
     db.session.commit()
     flash("Question Deleted Successfully.." , "success")
@@ -365,24 +604,28 @@ def delete_question():
 
 
 
+#verified
+@app.route("/admin/get-chapters", methods = ["POST", "GET"])
+@login_required
+@admin_only
+def get_chapters():
+    subject_id = request.args.get('subject_id')
+    if not subject_id:
 
+        chapters = db.session.query(Chapter).all()
+        chapters = [{"id":chapter.id, "name": chapter.name, "description": chapter.description} for chapter in chapters]
+        return jsonify(chapters)
 
-@app.route("/admin/delete-subject/<int:id>")
-def dlt_subject(id):
-    if id:
-        exiting_subject = db.session.query(Subject).filter(Subject.id == id ).first()
-        if not exiting_subject:
-            flash("Subject not Exits..." "danger")
-            return redirect(url_for("dashboard"))
-    
-        chapter = db.session.query(Chapter).filter(Chapter.subject_id == id).delete()
-
-
+    chapters = db.session.query(Chapter).filter(Chapter.subject_id == subject_id).all()
+    chapter_list = [{"id":chapter.id, "name": chapter.name, "description": chapter.description} for chapter in chapters]
+    return jsonify(chapter_list)
 
 
 
 
 @app.route("/admin/search", methods = ["POST", "GET"])
+@login_required
+@admin_only
 def search():
     search = request.form["search"]
 
@@ -402,8 +645,10 @@ def search():
 
 def question_count(chapter_id):
         question_count = db.session.query(db.func.count(Question.id)) \
-                        .filter(Question.chapter_id == chapter_id) \
+                        .join(Quiz,Question.quiz_id == Quiz.id)\
+                        .filter(Quiz.chapter_id == chapter_id) \
                         .scalar()
+        
         return question_count
 
 

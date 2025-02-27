@@ -1,5 +1,4 @@
 {% extends "admin/formbase.html" %}
-{% block title %}Add Quiz{% endblock %}
 
 {% block content %}
 
@@ -27,17 +26,17 @@
 
         <div class="mb-3">
             <label for="date_of_quiz" class="form-label">Date of Quiz</label>
-            <input type="date" class="form-control" name="date_of_quiz" id="date_of_quiz" required>
+            <input type="date" class="form-control" name="date_of_quiz" required>
         </div>
 
         <div class="mb-3">
-            <label for="time" class="form-label">Time</label>
-            <input type="time" class="form-control" name="time" id="time" required>
+            <label for="time" class="form-label">Time(In Minutes)</label>
+            <input type="text" class="form-control" name="time" placeholder="mm:ss" required>
         </div>
 
         <div class="mb-3">
             <label for="remarks" class="form-label">Remarks</label>
-            <textarea class="form-control" name="remarks" id="remarks" rows="3"></textarea>
+            <textarea class="form-control" name="remarks" rows="3"></textarea>
         </div>
 
         <div class="d-flex justify-content-between">
@@ -82,12 +81,12 @@
 
         <div class="mb-3">
             <label for="time" class="form-label">Time(In Minutes)</label>
-            <input type="time" class="form-control" name="time" id="time" value="{{quiz.time}}" required>
+            <input type="text" class="form-control" name="time" placeholder="mm:ss" value="{{quiz.time}}" required>
         </div>
 
         <div class="mb-3">
             <label for="remarks" class="form-label">Remarks</label>
-            <textarea class="form-control" name="remarks" id="remarks" rows="3">{{ quiz.remarks }}</textarea>
+            <textarea class="form-control" name="remarks" rows="3">{{ quiz.remarks }}</textarea>
         </div>
 
         <div class="d-flex justify-content-between">

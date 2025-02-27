@@ -1,16 +1,27 @@
-from flask import Flask,flash
+from flask import Flask,flash, current_app as app, abort
 from flask import render_template , request, redirect, url_for
 from flask_login import login_required, logout_user, current_user
-from flask import current_app as app
 from models.model import *
 from datetime import date
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import os
+from functools import wraps
+
+def user_only(func):
+    @wraps(func)
+    def decorated_function(*args, **kwargs):
+        if current_user.id == 1:
+            abort(403)
+        
+        return func(*args, **kwargs) 
+    return decorated_function
+    
 
 @app.route("/dashboard")
 @login_required
+@user_only
 def dashboard():
     if current_user.is_authenticated:
         today_date = date.today()
@@ -36,9 +47,10 @@ def dashboard():
 
 @app.route("/quiz/<int:id>", methods = ["POST", "GET"])
 @login_required
+@user_only
 def quiz_start(id):
-    quiz = Quiz.query.get(id)
-    questions = Question.query.filter_by(quiz_id=id).all()
+    quiz = db.session.query(Quiz).filter(Quiz.id == id).first()
+    questions = db.session.query(Question).filter(Question.quiz_id == id).all()
 
     if current_user.is_authenticated and request.method == "POST":
         question_answer = {question.id : question.correct_option for question in questions}
@@ -49,9 +61,10 @@ def quiz_start(id):
             if value == question_answer[key]:
                 score += 1
         
-        if Score.query.filter_by(user_id = current_user.id, quiz_id = id).first():
+        if db.session.query(Score).filter(Score.user_id == current_user.id, Score.quiz_id == id).first():
             flash("Already attempted the quiz", "danger")
             return redirect(url_for("dashboard"))
+
 
         new_score = Score(user_id = current_user.id, quiz_id = id, total_scored = score)
         db.session.add(new_score)
@@ -60,13 +73,13 @@ def quiz_start(id):
         return redirect(url_for("dashboard"))
 
     if current_user.is_authenticated:
-        quiz_questions = {"id":quiz.id, "time" : quiz.time_duration, "questions":[{"question_number": index + 1, "id": question.id ,"question_statement": question.question_statement , "option1":question.option1, "option2":question.option2, "option3":question.option3, "option4": question.option4} for index, question in enumerate(questions)]}
+        quiz_questions = {"id":quiz.id, "time" : quiz.time_duration, "questions":questions}
 
         if quiz.date_of_quiz != date.today():
             flash("Attempt at the date of the quiz", "danger")
             return redirect(url_for("dashboard"))
 
-        if Score.query.filter_by(user_id = current_user.id, quiz_id = id).first():
+        if db.session.query(Score).filter(Score.user_id == current_user.id, Score.quiz_id == id).first():
             flash("Already attempted the quiz", "danger")
             return redirect(url_for("dashboard"))
         
@@ -76,6 +89,7 @@ def quiz_start(id):
 
 @app.route("/view-quiz/<int:id>")
 @login_required
+@user_only
 def view_quiz(id):
     if current_user.is_authenticated:
         quiz = db.session.query(
@@ -98,6 +112,7 @@ def view_quiz(id):
     
 @app.route("/score")
 @login_required
+@user_only
 def quiz_score():
     if current_user.is_authenticated:
         scores = db.session.query(
@@ -120,6 +135,7 @@ def quiz_score():
 
 @app.route("/summary")
 @login_required
+@user_only
 def summary():
     if current_user.is_authenticated:
         id = current_user.id
@@ -138,6 +154,7 @@ def summary():
             month_quiz = (
                 db.session.query(
                     db.func.strftime('%m', Score.time_stamp_of_attempt).label("month"), 
+                    db.func.strftime('%Y', Score.time_stamp_of_attempt).label("year"),
                     db.func.count(Score.user_id).label("attempts") 
                 )
                 .filter(Score.user_id == current_user.id)
@@ -145,7 +162,7 @@ def summary():
                 .order_by("month")
                 .all()
             )
-            months = [quiz.month for quiz in month_quiz]
+            months = [f'{quiz.month} {quiz.year}' for quiz in month_quiz]
             attempt = [quiz.attempts for quiz in month_quiz]
 
             plt.pie(attempt, labels=months, autopct=lambda p: '{:.0f}'.format(p * sum(attempt) / 100),  startangle=90)
@@ -157,6 +174,11 @@ def summary():
             subjects = [quiz.Subject for quiz in quiz_attempted]
             chapter_counts = [quiz.Chapter_Count for quiz in quiz_attempted]
 
+            if chapter_counts: 
+                plt.yticks([i for i in range(1, max(chapter_counts) + 2)])
+            else:
+                plt.yticks([1])
+             
             plt.bar(subjects, chapter_counts)
             file_path = os.path.join("static/charts/histogram", f'{current_user.id}histogram.png')
             plt.savefig(file_path)
@@ -165,3 +187,4 @@ def summary():
             return render_template("user/summary.html", month_quiz = month_quiz)
 
     return render_template("user/summary.html")
+

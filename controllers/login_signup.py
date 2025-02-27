@@ -18,12 +18,14 @@ def login():
         email = request.form['username']
         password = request.form['password']
 
-        user = User.query.filter_by(username=email).first()
+        user = db.session.query(User).filter(User.username == email).first()
+        
 
         if user:
             if check_password_hash(user.password, password):
                 login_user(user) 
-                print(current_user)
+                if user.id == 1:
+                    return redirect(url_for("admin_dashboard"))
                 return redirect(url_for('dashboard'))
             else:
                 return render_template("login.html", alert = "Password Not Matched...")

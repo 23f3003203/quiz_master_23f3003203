@@ -1,5 +1,4 @@
 {% extends "admin/formbase.html" %}
-{% block title %}Chapter{% endblock %}
 
 {% block content %}
 
@@ -9,13 +8,13 @@
     <form action="" method="POST">
         <div class="mb-3">
             <label for="chapter_name" class="form-label">Chapter Name</label>
-            <input type="text" class="form-control" name="chapter_name" id="chapter_name" value="{{chapter.name}}"
+            <input type="text" class="form-control" name="chapter_name" value="{{chapter.name}}"
                 required>
         </div>
 
         <div class="mb-3">
             <label for="description" class="form-label">Description</label>
-            <input type="text" class="form-control" name="description" id="description" value="{{chapter.description}}">
+            <input type="text" class="form-control" name="description" value="{{chapter.description}}">
         </div>
 
         <div class="d-flex justify-content-between">
@@ -24,21 +23,22 @@
         </div>
     </form>
 </div>
+
 {% endif %}
 
 {% if add_chapter %}
 <div class="card shadow p-4 mx-auto w-50 w-md-75 w-sm-100">
     <h2 class="mb-4 text-center">Add New Chapter</h2>
-    <form action="" method="post">
+    <form action="" method="POST">
 
         <div class="mb-3">
             <label for="chapter_name" class="form-label">Chapter Name</label>
-            <input type="text" class="form-control" name="chapter_name" id="chapter_name" required>
+            <input type="text" class="form-control" name="chapter_name" required>
         </div>
 
         <div class="mb-3">
             <label for="description" class="form-label">Description</label>
-            <input type="text" class="form-control" name="description" id="description">
+            <input type="text" class="form-control" name="description">
         </div>
 
         <div class="d-flex justify-content-between">

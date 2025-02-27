@@ -3,7 +3,7 @@
 {%block content%}
 <div class="container mt-4">
   <div class="row">
-    <!-- Subjects Section -->
+   
     {% for subject in subjects %}
     <div class="col-md-6 subject-card mb-5">
       <div class="card">
@@ -40,7 +40,7 @@
               Chapter</button></a>
         </div>
         <div class="card-footer mt-2 d-flex justify-content-center">
-          <a href="#" class="btn btn-m btn-edit w-50">Edit Subject</a>
+          <a href="/admin/edit_subject?subject_id={{subject.id}}" class="btn btn-m btn-edit w-50">Edit Subject</a>
         </div>
       </div>
     </div>
@@ -49,7 +49,7 @@
   </div>
 
   <div class="text-center mt-4">
-    <a href="#" id="show-more" class="text-decoration-none">All subjects here...</a>
+    <a href="#" id="show-more" class="text-decoration-none">Show More...</a>
     <a href="#" id="show-less" class="text-decoration-none">Show Less...</a>
   </div>
   <div class="text-center mt-4">
@@ -74,7 +74,7 @@
 
     showLess.style.display = "none";
 
-    if (subjects.length === 1) {
+    if (subjects.length <= 2) {
       showMore.style.display = "none";
     }
 
