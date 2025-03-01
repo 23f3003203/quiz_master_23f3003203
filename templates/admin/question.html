@@ -92,11 +92,13 @@
             <select class="form-control w-50" name="correct-option" id="correct-option" required>
                 
                 <option value="">-- Select Correct Option --</option>
-                {% for i in range(4) %}
+                {% for i in range(1,5) %}
                     {% if question.correct_option == i | string %}
                     <option value="{{i}}" selected>{{i}}</option>
-                    {% endif %}
+                    {% else %}
                     <option value="{{i}}">{{i}}</option>
+                    {% endif %}
+                    
                 {% endfor %}
 
             </select>

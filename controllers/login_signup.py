@@ -4,6 +4,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from models.model import db,User
 from datetime import datetime
 
+#verified
 @app.route("/")
 def index():
     if current_user.is_authenticated:
@@ -12,6 +13,7 @@ def index():
     return render_template('login.html')
 
 
+#verified
 @app.route("/login", methods = ['POST', 'GET'])
 def login():
     if request.method == 'POST':
@@ -35,6 +37,7 @@ def login():
     return redirect(url_for('dashboard'))
 
 
+#verified
 @app.route("/signup", methods = ['POST', 'GET'])
 def signup(): 
     if request.method == 'POST':
@@ -69,7 +72,10 @@ def signup():
             return render_template("signup.html")
         
     return render_template("signup.html")
-    
+
+
+
+#verified   
 @app.route('/logout' , methods = ['POST', 'GET'])
 @login_required
 def logout():

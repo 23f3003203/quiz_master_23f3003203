@@ -75,7 +75,7 @@ def quiz():
 @login_required
 @admin_only
 def admin_summary():
-    users = db.session.query(User)
+    users = db.session.query(User).filter(User.id != 1).all()
     subjects_all = db.session.query(Subject)
 
     if request.args.get("subject") and request.args.get("chapter"):
@@ -561,7 +561,7 @@ def edit_question():
 
         db.session.commit()
         flash("Question Updated Successfully", "success")
-        return redirect(url_for('quiz'))
+        return redirect(request.referrer)
     
     
     question = db.session.query(Question).filter(Question.id == question_id).first()
@@ -600,7 +600,7 @@ def delete_question():
     db.session.delete(question)
     db.session.commit()
     flash("Question Deleted Successfully.." , "success")
-    return redirect(url_for('quiz'))
+    return redirect(request.referrer)
 
 
 

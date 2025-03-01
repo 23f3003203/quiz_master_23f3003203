@@ -137,6 +137,8 @@
     selectedSubject.onchange = function () {
         const subjectId = selectedSubject.value;
         const chapterSelect = document.getElementById('chapter');
+        chapterSelect.innerHTML = '<option value="">-- Select Chapter --</option>';
+    
 
         fetch(`/admin/get-chapters?subject_id=${subjectId}`)
             .then(response => response.json())
