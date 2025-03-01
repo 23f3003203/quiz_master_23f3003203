@@ -10,7 +10,7 @@ function startTimer(duration) {
 
         if (timer <= 0) {
             clearInterval(countdown);
-            display.textContent = "Time's up!";
+            document.getElementById("submit-button").click(); 
         } else {
             timer--;
         }
