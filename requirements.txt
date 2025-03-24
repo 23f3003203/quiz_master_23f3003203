@@ -1,4 +1,4 @@
-python >=11
+python
 Flask
 Werkzeug
 Flask-SQLAlchemy
